@@ -186,7 +186,7 @@
     <nav class="tab-bar">
         <button class="tab-item active" onclick="switchTab('counter', this)"><span class="tab-icon">🔬</span>Counter</button>
         <button class="tab-item" onclick="switchTab('dilution', this)"><span class="tab-icon">🧪</span>Dilution</button>
-        <button class="tab-item" onclick="switchTab('malaria', this)"><span class="tab-icon">🦟</span>Malaria</button>
+        <button class="tab-item" onclick="switchTab('malaria', this)"><span class="tab-icon">🛬</span>Malaria</button>
         <button class="tab-item" onclick="switchTab('timers', this)"><span class="tab-icon">⏱️</span>Timers</button>
     </nav>
 
@@ -200,7 +200,7 @@
             document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
             btn.classList.add('active');
-            document.getElementById('page-title').innerText = btn.innerText.replace(/[🔬🧪⏱️🦟]/g, '');
+            document.getElementById('page-title').innerText = btn.innerText.replace(/[🔬🧪⏱️🛬]/g, '');
         }
 
         function switchMalariaMethod() {
