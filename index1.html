@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Lab Gadgets Pro</title>
+    <style>
+        :root { 
+            --bg: #000000; --card-bg: #111; --text: #ffffff; --border: #333; --input-bg: #222;
+            --ios-blue: #007aff; --ios-green: #34c759; --ios-red: #ff3b30;
+        }
+        body.light-mode { 
+            --bg: #f2f2f7; --card-bg: #ffffff; --text: #000000; --border: #ddd; --input-bg: #f9f9f9;
+        }
+        
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; transition: background 0.3s; }
+        .header { 
+            background: var(--card-bg); padding: 20px 15px 10px; border-bottom: 1px solid var(--border); 
+            display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; 
+        }
+        h1 { margin: 0; font-size: 1.2em; }
+
+        .theme-toggle { background: var(--ios-blue); color: white; border: none; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; cursor: pointer; }
+
+        .tab-content { display: none; padding: 10px; }
+        .tab-content.active { display: block; }
+
+        .card { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text); font-size: 16px; box-sizing: border-box; }
+
+        /* Grid */
+        .custom-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, auto); gap: 8px; align-items: center; }
+        
+        .cell-btn { 
+            padding: 10px 2px; border: none; font-weight: bold; color: white; font-size: 10px; text-transform: uppercase; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            touch-action: manipulation; -webkit-user-select: none;
+        }
+        .cell-btn span { font-size: 14px; margin-top: 2px; }
+        .cell-btn:active { opacity: 0.6; transform: scale(0.95); }
+
+        .shape-circle { border-radius: 50%; aspect-ratio: 1 / 1; width: 100%; }
+        .shape-capsule { border-radius: 30px; grid-column: span 2; padding: 15px 0; }
+        .shape-tall { border-radius: 30px; grid-row: span 2; height: 100%; min-height: 140px; }
+        
+        /* Positioning */
+        .pos-oc { grid-area: 1 / 1; } .pos-meta { grid-area: 1 / 2; } .pos-pro { grid-area: 1 / 3; } .pos-nrbc { grid-area: 1 / 4 / span 2 / 4; }
+        .pos-eos { grid-area: 2 / 1; } .pos-bas { grid-area: 2 / 2; } .pos-myelo { grid-area: 2 / 3; }
+        .pos-mono { grid-area: 3 / 1; } .pos-lym { grid-area: 3 / 2; } .pos-neu { grid-area: 3 / 3; } .pos-band { grid-area: 3 / 4 / span 2 / 4; }
+        .pos-blast { grid-area: 4 / 1 / 4 / span 2; } .pos-atyly { grid-area: 4 / 3; }
+
+        /* Colors */
+        .c-neu { background: #22e0f5; } .c-mon { background: #207327; } .c-imm { background: #0e1ab5; } .c-eos { background: #c24e00 }
+        .c-blast { background: #6e4a1d; } .c-other { background: #ff8c00; } .c-nr { background: #56de49;} .c-lym { background: #b019b5;} .c-bas { background: #6300ed;}
+
+        /* Timer */
+        .timer-row { border-bottom: 1px solid var(--border); padding: 10px 0; }
+        .timer-controls { display: flex; gap: 8px; align-items: center; margin-top: 5px; }
+        .timer-name { font-weight: bold; border: none; padding: 5px; background: var(--input-bg); width: 60%; color: var(--text); border-radius: 4px; }
+        .timer-display { font-family: monospace; font-size: 1.2em; font-weight: bold; min-width: 60px; color: var(--ios-green); }
+        
+        /* Tab Bar (4 items now) */
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 25px; }
+        .tab-item { background: none; border: none; color: #8e8e93; font-size: 10px; display: flex; flex-direction: column; align-items: center; width: 23%; }
+        .tab-item.active { color: var(--ios-blue); }
+        .tab-icon { font-size: 18px; margin-bottom: 2px; }
+
+        .summary { font-size: 0.85em; margin-top: 10px; column-count: 2; line-height: 1.4; color: var(--text); }
+        .btn-reset { width:100%; background: var(--ios-red); color:white; border:none; padding:12px; border-radius:8px; margin-top:15px; font-weight:bold; }
+        .result-box { background: var(--input-bg); padding: 12px; border-radius: 10px; margin-top: 10px; border: 1px solid var(--border); }
+        .malaria-section { display: none; }
+        .malaria-section.active { display: block; }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <div class="header">
+        <h1 id="page-title">Differential Counter</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+    </div>
+
+    <div id="tab-counter" class="tab-content active">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="font-size:0.9em;">Goal: <input type="number" id="goal" value="100" style="width: 50px; display:inline;" oninput="updateGoal()"></span>
+                <div style="font-weight: 800;">WBC: <span id="total">0</span>/<span id="currentGoal">100</span></div>
+            </div>
+            
+            <div class="custom-grid">
+                <button class="cell-btn shape-circle c-other pos-oc" onclick="count('oc')">OC<br><span id="c-oc">0</span></button>
+                <button class="cell-btn shape-circle c-imm pos-meta" onclick="count('met')">META<br><span id="c-met">0</span></button>
+                <button class="cell-btn shape-circle c-imm pos-pro" onclick="count('pro')">PRO<br><span id="c-pro">0</span></button>
+                <button class="cell-btn shape-tall c-nr pos-nrbc" onclick="count('nrb')">NRBC<br><span id="c-nrb">0</span></button>
+
+                <button class="cell-btn shape-circle c-eos pos-eos" onclick="count('eos')">EOS<br><span id="c-eos">0</span></button>
+                <button class="cell-btn shape-circle c-bas pos-bas" onclick="count('bas')">BAS<br><span id="c-bas">0</span></button>
+                <button class="cell-btn shape-circle c-imm pos-myelo" onclick="count('mye')">MYELO<br><span id="c-my">0</span></button>
+                
+                <button class="cell-btn shape-circle c-mon pos-mono" onclick="count('mon')">MONO<br><span id="c-mon">0</span></button>
+                <button class="cell-btn shape-circle c-lym pos-lym" onclick="count('lym')">LYM<br><span id="c-lym">0</span></button>
+                <button class="cell-btn shape-circle c-neu pos-neu" onclick="count('neu')">NEU<br><span id="c-neu">0</span></button>
+                <button class="cell-btn shape-tall c-neu pos-band" onclick="count('band')">BAND<br><span id="c-band">0</span></button>
+
+                <button class="cell-btn shape-capsule c-blast pos-blast" onclick="count('bla')">BLAST<br><span id="c-bla">0</span></button>
+                <button class="cell-btn shape-circle c-other pos-atyly" onclick="count('aly')">A-LYM<br><span id="c-aly">0</span></button>
+            </div>
+            
+            <button onclick="resetCounter()" class="btn-reset">Reset Counts</button>
+            <div class="summary" id="summary"></div>
+        </div>
+    </div>
+
+    <div id="tab-dilution" class="tab-content">
+        <div class="card">
+            <h2>Dilution Calculation</h2>
+            <label style="font-size: 0.8em; opacity: 0.7;">Stock Concentration (C1)</label>
+            <input type="number" id="c1" placeholder="C1" oninput="calc()">
+            <label style="font-size: 0.8em; opacity: 0.7;">Target Concentration (C2)</label>
+            <input type="number" id="c2" placeholder="C2" oninput="calc()">
+            <label style="font-size: 0.8em; opacity: 0.7;">Final Volume (V2)</label>
+            <input type="number" id="v2" placeholder="V2" oninput="calc()">
+            <div class="result-box">
+                Required Stock: <span id="v1_res" style="font-weight:bold; color:var(--ios-blue);">0.00</span><br>
+                Diluent to add: <span id="dil_res" style="font-weight:bold; color:var(--ios-blue);">0.00</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tab-malaria" class="tab-content">
+        <div class="card">
+            <h2>Malaria Parasite Density</h2>
+            
+            <label style="font-size: 0.8em; opacity: 0.7;">Method Type</label>
+            <select id="malaria-method" onchange="switchMalariaMethod()">
+                <option value="miller">Thin Film (Miller Ocular)</option>
+                <option value="fields">Thin Film (Fields of 200 RBC)</option>
+                <option value="thick">Thick Film Count</option>
+            </select>
+
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 0.8em; opacity: 0.7;">WBC Count ($\times 10^9$/L)</label>
+                    <input type="number" id="mal-wbc" value="8.0" step="0.1" oninput="calcMalaria()">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 0.8em; opacity: 0.7;">RBC Count ($\times 10^{12}$/L)</label>
+                    <input type="number" id="mal-rbc" value="4.38" step="0.01" oninput="calcMalaria()">
+                </div>
+            </div>
+
+            <div id="sec-miller" class="malaria-section active">
+                <label style="font-size: 0.8em; opacity: 0.7; margin-top: 10px; display: block;">Red Cells Counted (Small Square)</label>
+                <input type="number" id="miller-rbc" value="200" oninput="calcMalaria()">
+                <label style="font-size: 0.8em; opacity: 0.7;">Parasites Counted (Large Square)</label>
+                <input type="number" id="miller-para" placeholder="e.g. 30" oninput="calcMalaria()">
+            </div>
+
+            <div id="sec-fields" class="malaria-section">
+                <label style="font-size: 0.8em; opacity: 0.7; margin-top: 10px; display: block;">Total Red Cells Counted</label>
+                <input type="number" id="fields-rbc" value="2000" oninput="calcMalaria()">
+                <label style="font-size: 0.8em; opacity: 0.7;">Total Parasites Counted</label>
+                <input type="number" id="fields-para" placeholder="e.g. 45" oninput="calcMalaria()">
+            </div>
+
+            <div id="sec-thick" class="malaria-section">
+                <label style="font-size: 0.8em; opacity: 0.7; margin-top: 10px; display: block;">White Cells Counted</label>
+                <input type="number" id="thick-wbc" value="100" oninput="calcMalaria()">
+                <label style="font-size: 0.8em; opacity: 0.7;">Parasites Counted</label>
+                <input type="number" id="thick-para" placeholder="e.g. 75" oninput="calcMalaria()">
+            </div>
+
+            <div class="result-box" style="margin-top: 15px;">
+                Density: <span id="mal-density" style="font-weight:bold; color:var(--ios-green);">0</span> parasites/µL<br>
+                Parasitemia: <span id="mal-percent" style="font-weight:bold; color:var(--ios-green);">0.00</span> % Infected RBC
+            </div>
+        </div>
+    </div>
+    
+    <div id="tab-timers" class="tab-content">
+        <div class="card">
+            <h2>Lab Timers</h2>
+            <div id="timer-container"></div>
+        </div>
+    </div>
+
+    <nav class="tab-bar">
+        <button class="tab-item active" onclick="switchTab('counter', this)"><span class="tab-icon">🔬</span>Counter</button>
+        <button class="tab-item" onclick="switchTab('dilution', this)"><span class="tab-icon">🧪</span>Dilution</button>
+        <button class="tab-item" onclick="switchTab('malaria', this)"><span class="tab-icon">🦟</span>Malaria</button>
+        <button class="tab-item" onclick="switchTab('timers', this)"><span class="tab-icon">⏱️</span>Timers</button>
+    </nav>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            btn.classList.add('active');
+            document.getElementById('page-title').innerText = btn.innerText.replace(/[🔬🧪⏱️🦟]/g, '');
+        }
+
+        function switchMalariaMethod() {
+            const currentMethod = document.getElementById('malaria-method').value;
+            document.querySelectorAll('.malaria-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById('sec-' + currentMethod).classList.add('active');
+            calcMalaria();
+        }
+
+        // --- MALARIA CALCULATION LOGIC ---
+        function calcMalaria() {
+            const method = document.getElementById('malaria-method').value;
+            const wbcCount = parseFloat(document.getElementById('mal-wbc').value) || 0;
+            const rbcCount = parseFloat(document.getElementById('mal-rbc').value) || 0;
+            
+            let density = 0;
+            let percent = 0;
+
+            if (method === 'miller') {
+                const rbcCounted = parseFloat(document.getElementById('miller-rbc').value) || 1;
+                const paraCounted = parseFloat(document.getElementById('miller-para').value) || 0;
+                
+                // Formula from sheet: (N * RBC * 1000000) / (RBCs Counted * 9)
+                density = (paraCounted * rbcCount * 1000000) / (rbcCounted * 9);
+                // Formula from sheet: (N * 100) / (RBCs Counted * 9)
+                percent = (paraCounted * 100) / (rbcCounted * 9);
+
+            } else if (method === 'fields') {
+                const rbcCounted = parseFloat(document.getElementById('fields-rbc').value) || 1;
+                const paraCounted = parseFloat(document.getElementById('fields-para').value) || 0;
+                
+                // Formula from sheet: (N * RBC * 1000000) / RBCs Counted
+                density = (paraCounted * rbcCount * 1000000) / rbcCounted;
+                // Formula from sheet: (N * 100) / RBCs Counted
+                percent = (paraCounted * 100) / rbcCounted;
+
+            } else if (method === 'thick') {
+                const wbcCounted = parseFloat(document.getElementById('thick-wbc').value) || 1;
+                const paraCounted = parseFloat(document.getElementById('thick-para').value) || 0;
+                
+                // Formula from sheet: (N * WBC * 1000) / WBCs Counted
+                density = (paraCounted * wbcCount * 1000) / wbcCounted;
+                // Formula from sheet: (Density * 100) / (RBC * 1000000)
+                if (rbcCount > 0) {
+                    percent = (density * 100) / (rbcCount * 1000000);
+                }
+            }
+
+            document.getElementById('mal-density').innerText = Math.round(density).toLocaleString();
+            document.getElementById('mal-percent').innerText = percent.toFixed(2);
+        }
+
+        // --- TIMER SETUP ---
+        const container = document.getElementById('timer-container');
+        let timerIntervals = [null, null, null, null, null];
+        for (let i = 0; i < 5; i++) {
+            container.innerHTML += `
+                <div class="timer-row">
+                    <input type="text" class="timer-name" placeholder="Timer ${i+1}">
+                    <div class="timer-controls">
+                        <input type="number" id="time-input-${i}" placeholder="Sec" style="width: 70px; margin: 0;">
+                        <span class="timer-display" id="display-${i}">00:00</span>
+                        <button class="btn-start" style="background:var(--ios-green); color:white; border:none; padding:8px; border-radius:5px;" onclick="startTimer(${i})">▶</button>
+                        <button class="btn-stop" style="background:var(--ios-red); color:white; border:none; padding:8px; border-radius:5px;" onclick="stopTimer(${i})">⏹</button>
+                    </div>
+                </div>`;
+        }
+        function startTimer(i) {
+            if (timerIntervals[i]) return;
+            let seconds = parseInt(document.getElementById(`time-input-${i}`).value) || 0;
+            if (seconds <= 0) return;
+            timerIntervals[i] = setInterval(() => {
+                seconds--;
+                let m = Math.floor(seconds / 60); let s = seconds % 60;
+                document.getElementById(`display-${i}`).innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                if (seconds <= 0) {
+                    clearInterval(timerIntervals[i]); timerIntervals[i] = null;
+                    alert("Timer Finished!");
+                }
+            }, 1000);
+        }
+        function stopTimer(i) { clearInterval(timerIntervals[i]); timerIntervals[i] = null; document.getElementById(`display-${i}`).innerText = "00:00"; }
+
+        // --- GENERAL CELL COUNTER ---
+        const cellTypes = ['neu', 'lym', 'mon', 'eos', 'bas', 'aly', 'met', 'mye', 'pro', 'bla', 'oc', 'nrb', 'band'];
+        let counts = {}; cellTypes.forEach(t => counts[t] = 0);
+        let wbcTotal = 0; let goal = 100;
+
+        function count(type) {
+            if (window.navigator.vibrate) window.navigator.vibrate(40);
+            counts[type]++;
+            if (type !== 'nrb') {
+                wbcTotal++;
+                document.getElementById('total').innerText = wbcTotal;
+                if (wbcTotal == goal) alert("WBC Goal reached!");
+            }
+            document.getElementById('c-' + (type==='mye'?'my':type)).innerText = counts[type];
+            updateSummary();
+        }
+        function updateSummary() {
+            let html = "";
+            cellTypes.forEach(t => {
+                if (counts[t] > 0 && t !== 'nrb') {
+                    html += `<div>${t.toUpperCase()}: ${((counts[t] / wbcTotal) * 100).toFixed(1)}%</div>`;
+                }
+            });
+            if (counts['nrb'] > 0) html += `<div style="color:var(--ios-green); font-weight:bold; grid-column:span 2; margin-top:5px; border-top: 1px solid var(--border);">NRBC: ${counts['nrb']} per ${wbcTotal} WBC</div>`;
+            document.getElementById('summary').innerHTML = html;
+        }
+        function calc() {
+            const c1 = parseFloat(document.getElementById('c1').value) || 0;
+            const c2 = parseFloat(document.getElementById('c2').value) || 0;
+            const v2 = parseFloat(document.getElementById('v2').value) || 0;
+            if (c1 > 0) {
+                const v1 = (c2 * v2) / c1;
+                document.getElementById('v1_res').innerText = v1.toFixed(2);
+                document.getElementById('dil_res').innerText = (v2 - v1 > 0) ? (v2 - v1).toFixed(2) : "0.00";
+            }
+        }
+        function resetCounter() {
+            if(!confirm("Reset?")) return;
+            wbcTotal = 0; cellTypes.forEach(t => { counts[t] = 0; let el = document.getElementById('c-' + (t==='mye'?'my':t)); if(el) el.innerText = '0'; });
+            document.getElementById('total').innerText = '0'; document.getElementById('summary').innerHTML = '';
+        }
+        function updateGoal() { goal = parseInt(document.getElementById('goal').value) || 1; document.getElementById('currentGoal').innerText = goal; }
+    </script>
+</body>
+</html>
